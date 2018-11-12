@@ -13,25 +13,7 @@ MAINTAINERCLEANFILES = \
 
 include_HEADERS = evldns.h
 
-bin_PROGRAMS	= chaos as112d oas112d fixed
+bin_PROGRAMS	= fixed
 
-chaos_SOURCES	= chaos.c
-chaos_LDFLAGS	= -rdynamic -levldns -levent -lldns
-
-as112d_SOURCES	= as112d.c
-as112d_LDFLAGS	= -rdynamic -levldns -levent -lldns
-
-oas112d_SOURCES	= oas112d.c
-oas112d_LDFLAGS	= -rdynamic -levldns -levent -lldns
-
-fixed_SOURCES	= fixed.c
-fixed_LDFLAGS	= -rdynamic -levldns -levent -lldns
-
-lib_LTLIBRARIES	= libevldns.la mod_mangler.la mod_txtrec.la mod_arec.la mod_myip.la
-
-libevldns_la_SOURCES	= evldns.c plugin.c function.c network.c
-
-mod_mangler_la_LDFLAGS = -module
-mod_txtrec_la_LDFLAGS = -module
-mod_arec_la_LDFLAGS = -module
-mod_myip_la_LDFLAGS = -module
+fixed_SOURCES	= fixed.c evldns.c plugin.c function.c network.c
+fixed_LDFLAGS	= -rdynamic -levent -lldns
