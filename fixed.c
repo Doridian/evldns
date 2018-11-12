@@ -46,6 +46,22 @@ void query_only(evldns_server_request *srq, void *user_data, ldns_rdf *qname, ld
 	}
 }
 
+
+void aaaarec_zero(evldns_server_request *srq, void *user_data, ldns_rdf *qname, ldns_rr_type qtype, ldns_rr_class qclass)
+{
+	ldns_pkt *req = srq->request;
+	ldns_pkt *resp = evldns_response(req, LDNS_RCODE_NOERROR);
+	ldns_rr *question = ldns_rr_list_rr(ldns_pkt_question(req), 0);
+	ldns_rr *rr = ldns_rr_clone(question);
+
+	ldns_rr_set_ttl(rr, 3600L);
+	ldns_rr_push_rdf(rr, ldns_rdf_new_frm_str(LDNS_RDF_TYPE_AAAA, "::"));
+	ldns_rr_list_push_rr(ldns_pkt_answer(resp), rr);
+	ldns_pkt_set_ancount(resp, 1);
+
+	srq->response = resp;
+}
+
 void arec_zero(evldns_server_request *srq, void *user_data, ldns_rdf *qname, ldns_rr_type qtype, ldns_rr_class qclass)
 {
 	ldns_pkt *req = srq->request;
@@ -78,6 +94,7 @@ int main(int argc, char *argv[])
 	/* register a list of callbacks */
 	evldns_add_callback(p, NULL, LDNS_RR_CLASS_ANY, LDNS_RR_TYPE_ANY, query_only, NULL);
 	evldns_add_callback(p, "*", LDNS_RR_CLASS_IN, LDNS_RR_TYPE_A, arec_zero, NULL);
+	evldns_add_callback(p, "*", LDNS_RR_CLASS_IN, LDNS_RR_TYPE_AAAA, aaaarec_zero, NULL);
 
 	/* and set it running */
 	event_base_dispatch(base);
