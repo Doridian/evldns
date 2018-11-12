@@ -46,11 +46,25 @@ void query_only(evldns_server_request *srq, void *user_data, ldns_rdf *qname, ld
 	}
 }
 
+void arec_zero(evldns_server_request *srq, void *user_data, ldns_rdf *qname, ldns_rr_type qtype, ldns_rr_class qclass)
+{
+	ldns_pkt *req = srq->request;
+	ldns_pkt *resp = evldns_response(req, LDNS_RCODE_NOERROR);
+	ldns_rr *question = ldns_rr_list_rr(ldns_pkt_question(req), 0);
+	ldns_rr *rr = ldns_rr_clone(question);
+
+	ldns_rr_set_ttl(rr, 3600L);
+	ldns_rr_push_rdf(rr, ldns_rdf_new_frm_str(LDNS_RDF_TYPE_A, "0.0.0.0"));
+	ldns_rr_list_push_rr(ldns_pkt_answer(resp), rr);
+	ldns_pkt_set_ancount(resp, 1);
+
+	srq->response = resp;
+}
+
 int main(int argc, char *argv[])
 {
 	struct event_base			*base;
 	struct evldns_server		*p;
-	evldns_callback				 arec;
 
 	base = event_base_new();
 
@@ -61,15 +75,9 @@ int main(int argc, char *argv[])
 	/* create sockets and add them to the context */
 	evldns_add_server_ports(p, bind_to_all(NULL, "5053", 10));
 
-	/* load a couple of plugins */
-	evldns_load_plugin(p, ".libs/mod_arec.so");
-
-	/* get plugin defined functions */
-	arec = evldns_get_function("a");
-
 	/* register a list of callbacks */
 	evldns_add_callback(p, NULL, LDNS_RR_CLASS_ANY, LDNS_RR_TYPE_ANY, query_only, NULL);
-	evldns_add_callback(p, "*", LDNS_RR_CLASS_IN, LDNS_RR_TYPE_A, arec, "192.168.1.1");
+	evldns_add_callback(p, "*", LDNS_RR_CLASS_IN, LDNS_RR_TYPE_A, arec_zero, NULL);
 
 	/* and set it running */
 	event_base_dispatch(base);
